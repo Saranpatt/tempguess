@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TempGuess - เกมทายอุณหภูมิ</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -60,11 +62,24 @@
   </div>
 
   <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB4gW48ZS_vkDXje2jqSLOLFbfJFiXoMKA",
+      authDomain: "tempguess-eb202.firebaseapp.com",
+      projectId: "tempguess-eb202",
+      storageBucket: "tempguess-eb202.firebasestorage.app",
+      messagingSenderId: "510778771205",
+      appId: "1:510778771205:web:3b8f7dd61e0d7c2f44d96c",
+      measurementId: "G-6HZQWFYWNY"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     async function guessTemp() {
       const city = document.getElementById("city").value;
       const unit = document.getElementById("unit").value;
       const guess = parseFloat(document.getElementById("guessInput").value);
-      const apiKey = "3bc71b04e6e50a5b2d76a6b47b979e92"; // TEST KEY
+      const apiKey = "3bc71b04e6e50a5b2d76a6b47b979e92";
 
       if (isNaN(guess)) {
         document.getElementById("result").textContent = "กรุณากรอกตัวเลขอุณหภูมิให้ถูกต้อง";
@@ -81,15 +96,25 @@
 
       const temp = data.main.temp;
       const diff = Math.abs(temp - guess);
+      const correct = diff <= 1;
 
       const resultText = document.getElementById("result");
-      if (diff <= 1) {
+      if (correct) {
         resultText.textContent = `คุณทายถูกเป๊ะ! อุณหภูมิจริง: ${temp.toFixed(1)}°`;
       } else if (diff <= 3) {
         resultText.textContent = `ใกล้เคียง! อุณหภูมิจริง: ${temp.toFixed(1)}°, คุณทาย: ${guess}`;
       } else {
         resultText.textContent = `คุณทายผิด! อุณหภูมิจริง: ${temp.toFixed(1)}°, คุณทาย: ${guess}`;
       }
+
+      await db.collection("guesses").add({
+        city,
+        unit,
+        guess,
+        actualTemp: temp,
+        correct,
+        timestamp: new Date().toISOString()
+      });
     }
   </script>
 </body>
